@@ -1,0 +1,126 @@
+
+binary-operator : Type -> Type
+binary-operator carrier := <carrier, carrier> -> carrier
+
+associativity : Type -> Type
+associativity carrier := <a, b, c : carrier> -> (a * b) * c = a * (b * c)
+
+identity : magma -> Type
+identity <carrier, *> := 
+	< e: carrier
+	, left-idempotent:  (a : carrier) -> e * a = a,
+	, right-idempotent: (a : carrier) -> a * e = a
+	>
+>
+
+commutative-identity : commutative-magma -> Type
+commutative-identity <carrier, *> := 
+	< e: carrier
+	, idempotent: (a : carrier) -> e * a = a
+	>
+
+inverses : monoid -> Type
+inverses <carrier, *, e> = <
+	invert: carrier -> carrier,
+	has-inverse: <a: carrier> -> a * inv(a) = e
+>
+
+commutativity : magma -> Type
+commutativity carrier * = <a, b: carrier> -> a * b = b * a
+
+magma : Type
+magma := <
+	carier : Set, 
+	* : binary-operator(carrier)
+>
+
+semi-group := <
+	magma,
+	associativity(magma)
+>
+
+monoid := <
+	semi-group,
+	identity(semi-group)
+>
+
+commutative-monoid := <
+	monoid,
+	commutivity(monoid)
+>
+
+group := <
+	monoid,
+	inverses(monoid)
+>
+
+commutative-group := <
+	group,
+	commutivity(group)
+>
+
+rng := <
+	carrier: Type,
+	+: binary-operator(carrier),
+	*: binary-operator(carrier),
+	group `on` <carrier, +>,
+	
+>
+
+forms: <args: Type, result: args -> Type> -> <args, result(args)> -> result(args) 
+
+
+
+group ~= <
+	carrier: Type,
+	*: <carrier, carrier> -> carrier,
+	associativity: <a, b, c : carrier> -> (a * b) * c = a * (b * c),
+	identity: < e: carrier
+		,(a: carrier) -> <
+			left-idempotent:  a * e = a,
+			right-idempotent: e * a = a
+		>
+	>
+>
+
+identity\left-idempotent : <M: magma, e:  M> -> <a: magma\carrier M> -> a * e = a
+
+group\identity\left-idempotent ~> <M: magma, a : carrier> -> a * e = a
+
+
+identity\left-idempotent : <carrier, *, e, left-idempotent> -> (a : carrier) -> e * a = a
+
+id (a: carrier -> a * e = a) group
+
+id (a: carrier -> a * 1 = a) (cast Group <Z, +>)
+
+castable : <src-T: Type, target-T: Type>
+
+castable : Type
+castable = <str-T: Type, target-T: Type, cast: src-T -> target-T>
+
+<magma, group, \<Z, +> -> <Z, +, [associativity(Z, +)], [identity(Z, +)]>> : castable
+
+cast src type = src -> type
+
+cast magma group <Z, +> := <Z, +, [associativity(Z, +)], [identity(Z, +)]>
+
+cast : Type -> Type
+cast Group 
+
+
+[commutative-magma -> (commutative-identity -> identity)] <carrier, *, commutative> <e, idempotent> := 
+	< e: e,
+	, left-idempotent:  idempotent
+	, right-idempotent: \a. lift(commutative(e, a), idempotent(a))
+	>
+
+[commutative-magma -> (identity -> commutative-identity)] <carrier, *, commutative> <e, left-idempotent, right-idempotent> := 
+	< e: e
+	, idempotent:  left-idempotent
+	>
+
+[commutative-magma -> (identity ~= commutative-identity)] := <
+	[commutative-magma -> (commutative-identity -> identity)],
+	[commutative-magma -> (identity -> commutative-identity)]
+>
