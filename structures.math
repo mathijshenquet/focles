@@ -1,79 +1,152 @@
 
 binary-operator : Type -> Type
-binary-operator carrier := <carrier, carrier> -> carrier
-
-associativity : Type -> Type
-associativity carrier := <a, b, c : carrier> -> (a * b) * c = a * (b * c)
-
-identity : magma -> Type
-identity <carrier, *> := 
-	< e: carrier
-	, left-idempotent:  (a : carrier) -> e * a = a,
-	, right-idempotent: (a : carrier) -> a * e = a
-	>
->
-
-commutative-identity : commutative-magma -> Type
-commutative-identity <carrier, *> := 
-	< e: carrier
-	, idempotent: (a : carrier) -> e * a = a
-	>
-
-inverses : monoid -> Type
-inverses <carrier, *, e> = <
-	invert: carrier -> carrier,
-	has-inverse: <a: carrier> -> a * inv(a) = e
->
-
-commutativity : magma -> Type
-commutativity carrier * = <a, b: carrier> -> a * b = b * a
+binary-operator S := (S, S) -> carrier
 
 magma : Type
-magma := <
-	carier : Set, 
-	* : binary-operator(carrier)
->
-
-semi-group := <
-	magma,
-	associativity(magma)
->
-
-monoid := <
-	semi-group,
-	identity(semi-group)
->
-
-commutative-monoid := <
-	monoid,
-	commutivity(monoid)
->
-
-group := <
-	monoid,
-	inverses(monoid)
->
-
-commutative-group := <
-	group,
-	commutivity(group)
->
-
-rng := (
-	carrier: Type,
-	+: (
-		binary-operator(carrier),
-		group `on` +
-	)
-	*: (
-		binary-operator(carrier),
-		group `on` *
-	)
-	bilinear(*, +)
+magma = (
+	carrier: Type
+	*: binary-operator(carrier)
 )
 
-forms: <args: Type, result: args -> Type> -> <args, result(args)> -> result(args) 
+associativity : magma -> Type
+associativity carrier * = (a, b, c : carrier) -> (a * b) * c = a * (b * c)
 
+semi-group = (
+	magma
+	associativity(magma)
+)
+
+identity : magma -> Type
+identity carrier * = (
+	e: carrier
+	left-idempotent:  (a: carrier) -> e * a = a
+	right-idempotent: (a: carrier) -> a * e = a
+)
+
+monoid : Type
+monoid = (
+	semi-group,
+	identity(semi-group)
+)
+
+inverses : monoid -> Type
+inverses carrier * e = (
+	invese: carrier -> carrier
+	has-inverse: (a: carrier) -> a * inverse(a) = e
+)
+
+group = (
+	monoid
+	inverses(monoid)
+)
+
+commutativity : magma -> Type
+commutativity carrier * = (a, b: carrier) -> a * b = b * a
+
+commutative-magma : Type
+commutative-magma = (
+	magma,
+	commutativity(magma)
+)
+
+commutative-identity : commutative-magma -> Type
+commutative-identity carrier * = (
+	e: carrier
+	idempotent: (a : carrier) -> e * a = a
+)
+
+under (carrier, *, commutative) : commutative-magma {
+	[commutative-identity ~=~ identity] = (left, right)
+		where
+			left e idempotent = (
+				e: e,
+				left-idempotent:  idempotent
+				right-idempotent: \a. lift(commutative(e, a), idempotent(a))
+			)
+
+			right e left-idempotent, right-idempotent> = (
+				e: e
+				idempotent:  left-idempotent
+			)
+}
+
+commutative-semigroup = (
+	commutative-magma,
+	associativity(commutative-magma)
+)
+
+commutative-monoid = (
+	commutative-semigroup
+	commutative-identity(monoid)
+)
+
+commutative-group = (
+	commutative-monoid
+	inverses(commutative-monoid)
+)
+
+{
+	local commutative-monoid
+
+	commutative-monoid' : Type
+	commutative-monoid' = (monoid, commutative(group))
+
+	[commutative-monoid ~=~ commutative-monoid'] = (left, right)
+		where left  = lift [commutative-identity ~=~ identity].left
+		      right = lift [commutative-identity ~=~ identity].right
+}
+
+rng = (
+	carrier: Type,
+	+: binary-operator(carrier),
+	*: binary-operator(carrier),
+	commutative-group `over` +,
+	semi-group `over` *
+)
+
+ring = (
+	rng,
+	identity(*)[1: e]
+)
+
+zero-divisor : (ring, x: carrier) -> (d: R, d != 0, x * d = 0)
+
+integral-domain = (
+	ring,
+	(a, b: R) -> (a * b = 0 -> a = 0 `or` b = 0)
+)
+
+open integral-domain {
+	(x : carrier) -> x = 0 <-> zero-divisor(x) :: x = (
+		λx = 0. (0, 0 * x = 0).
+		λd: zero-divisor(x). contradict (x != 0)
+			x * d = 0 -> cases {
+				x = 0 |- contradiction(x = 0, x != 0)
+				d = 0 |- contradiction(d = 0, d != 0)
+			}
+	)
+}
+
+alpha : (integral-domain, x: carrier) -> x = 0 <-> zero-divisor(x)
+alpha := (
+	(1, infer {
+		x = x     | refl_x
+		1 * x = x | identity
+		1 * x = 0 | x = 0
+	}
+	λd: zero-divisor(x). proof-by-contradiction (x = 0) {
+		x * d = 0  | zero-divisor(x) `apply` (d, -)
+		cases {
+			x = 0 | contradiction(x = 0, x != 0)
+			d = 0 |
+		} |
+	}
+)
+
+
+[(-: integral-domain, x : \ring\carrier) -> x = 0 <-> zero-divisor(x)] -
+
+zero-divisor
 
 
 group ~= <
@@ -111,21 +184,4 @@ cast src type = src -> type
 cast magma group <Z, +> := <Z, +, [associativity(Z, +)], [identity(Z, +)]>
 
 cast : Type -> Type
-cast Group 
-
-
-[commutative-magma -> (commutative-identity -> identity)] <carrier, *, commutative> <e, idempotent> := 
-	< e: e,
-	, left-idempotent:  idempotent
-	, right-idempotent: \a. lift(commutative(e, a), idempotent(a))
-	>
-
-[commutative-magma -> (identity -> commutative-identity)] <carrier, *, commutative> <e, left-idempotent, right-idempotent> := 
-	< e: e
-	, idempotent:  left-idempotent
-	>
-
-[commutative-magma -> (identity ~= commutative-identity)] := <
-	[commutative-magma -> (commutative-identity -> identity)],
-	[commutative-magma -> (identity -> commutative-identity)]
->
+cast Group
