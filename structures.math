@@ -59,13 +59,18 @@ commutative-group := <
 	commutivity(group)
 >
 
-rng := <
+rng := (
 	carrier: Type,
-	+: binary-operator(carrier),
-	*: binary-operator(carrier),
-	group `on` <carrier, +>,
-	
->
+	+: (
+		binary-operator(carrier),
+		group `on` +
+	)
+	*: (
+		binary-operator(carrier),
+		group `on` *
+	)
+	bilinear(*, +)
+)
 
 forms: <args: Type, result: args -> Type> -> <args, result(args)> -> result(args) 
 
